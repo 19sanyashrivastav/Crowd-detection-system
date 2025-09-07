@@ -1,0 +1,56 @@
+# detect_people.py
+import cv2
+import argparse
+import sys
+import os
+
+def detect_people(image_path, output_path=None):
+    # Load the image
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Cannot read image '{image_path}'")
+        return
+
+    # Initialize HOG descriptor/person detector
+    hog = cv2.HOGDescriptor()
+    hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+
+    # Detect people in the image
+    (rects, weights) = hog.detectMultiScale(
+        image,
+        winStride=(8, 8),
+        padding=(16, 16),
+        scale=1.05
+    )
+
+    # Draw bounding boxes
+    for (x, y, w, h) in rects:
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+    print(f"Detected {len(rects)} person(s) in the image.")
+
+    # Show the output image
+    cv2.imshow("People Detection", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # Save output if requested
+    if output_path:
+        cv2.imwrite(output_path, image)
+        print(f"Output saved to: {output_path}")
+
+if __name__ == "__main__":
+    try:
+        import numpy
+    except ImportError:
+        print("Error: numpy is required. Install it with: pip install numpy")
+        sys.exit(1)
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Detect people in an image using OpenCV HOG + SVM.")
+    parser.add_argument("--image", required=True, help="Path to the input image")
+    parser.add_argument("--output", required=False, help="Path to save the output image")
+    args = parser.parse_args()
+
+    # Run detection
+    detect_people(args.image, args.output)
